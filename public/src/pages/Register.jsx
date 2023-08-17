@@ -35,7 +35,7 @@ function Register() {
 
       if (data.status === true) {
         localStorage.setItem('chat-app-user', JSON.stringify(data.user))
-        navigate("/"); //being redirected to chat url on '/'
+        navigate("/login"); //being redirected to login for login
       }
     }
   };

@@ -1,12 +1,12 @@
-import React, { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom';
-import styled from 'styled-components'
-import loader from '../assets/loader.gif';
-import { ToastContainer, toast } from 'react-toastify';
-import "react-toastify/dist/ReactToastify.css";
+import React, { useEffect, useState } from "react";
+import styled from "styled-components";
 import axios from "axios";
-import { SetAvatarRoute } from '../utils/APIRoutes';
-import { Buffer } from 'buffer';
+import { Buffer } from "buffer";
+import loader from "../assets/loader.gif";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import { useNavigate } from "react-router-dom";
+import { setAvatarRoute } from "../utils/APIRoutes";
 
 export default function SetAvatar() {
   const api = 'https://api.multiavatar.com/125';
@@ -26,12 +26,12 @@ export default function SetAvatar() {
   useEffect(() => {
     const itemexists = async () => {
       if (!localStorage.getItem("chat-app-user")) {
-        navigate("/")
+        navigate("/login")
       }
     }
-    itemexists()
+    itemexists();
   }, [])
-
+console.log("avatar avlue" + avatars[1] )
   const setProfilePicture = async () => {
     try {
       if (selectedAvatar === undefined) {
@@ -39,14 +39,17 @@ export default function SetAvatar() {
       }
       else {
         const user = await JSON.parse(localStorage.getItem("chat-app-user"));
-        const { data } = await axios.post(`${SetAvatarRoute}/${user._id}`, {
+        const { data } = await axios.post(`${setAvatarRoute}/${user._id}`, {
           image: avatars[selectedAvatar]
         })
         if (data.isSet) {
-          user.isAvatarImageSet = true
-          user.avatarImage = data.image
-          localStorage.setItem("chat-app-user", JSON.stringify(user))
-          navigate("/login");
+          user.isAvatarImageSet = true;
+          user.avatarImage = data.image;
+          localStorage.setItem(
+            "chat-app-user",
+            JSON.stringify(user)
+          );
+          navigate("/");
         }
         else {
           toast.error("Error setting Avatar.Please try again!", toastOptions)
