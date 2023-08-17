@@ -1,20 +1,43 @@
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import styled from "styled-components"
 import Logout from './Logout';
 import ChatInput from './ChatInput';
 import Messages from './Messages';
 import axios from "axios";
-import { sendMessageRoute } from '../utils/APIRoutes';
+import { getAllMessagesRoute, sendMessageRoute } from '../utils/APIRoutes';
 export default function ChatContainer({ currentChat,currentUser }) {
-  
-  const handleSendMsg = async (msg) =>{
-    console.log(currentChat,currentUser,sendMessageRoute);
-    await axios.post(sendMessageRoute,{
-      from:currentUser._id,
-      to:currentChat._id,
-      message:msg,
-    })
+ const [messages,setMessages] = useState([]) 
+ 
+ const handleSendMsg = async (msg) => {
+  if (currentUser && currentChat) {
+    await axios.post(sendMessageRoute, {
+      from: currentUser._id,
+      to: currentChat._id,
+      message: msg,
+    });
   }
+};
+
+useEffect(() => {
+  fetchMessages();
+}, [currentChat]);
+
+const fetchMessages = async () => {
+  if (currentUser && currentChat) {
+    try {
+      const response = await axios.post(getAllMessagesRoute, {
+        from: currentUser._id,
+        to: currentChat._id,
+      });
+      setMessages(response.data); // Set messages to the response data array
+    } catch (error) {
+      console.error(error);
+    }
+  }
+};
+
+
+
   
   return (
     <>
@@ -34,7 +57,23 @@ export default function ChatContainer({ currentChat,currentUser }) {
             </div>
             <Logout/>
           </div>
-            <Messages/>
+            <div className="chat-messages">
+                {
+                messages.map((value, index) => {
+                  return (
+                    <div key={index}>
+                      <div className={`message ${value.fromSelf ? "sended" : "recieved"}`}>
+                        <div className="content">
+                          <p>
+                          {value.message} 
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  )
+                })
+              }
+              </div>
             <ChatInput handleSendMsg={handleSendMsg}/>
         </Container>
       )
@@ -43,7 +82,13 @@ export default function ChatContainer({ currentChat,currentUser }) {
 }
 
 const Container = styled.div`
-  padding-top:1rem;
+  display: grid;
+  grid-template-rows: 10% 80% 10%;
+  gap: 0.1rem;
+  overflow: hidden;
+  @media screen and (min-width: 720px) and (max-width: 1080px) {
+    grid-template-rows: 15% 70% 15%;
+  }
   .chat-header {
     display: flex;
     justify-content: space-between;
@@ -70,6 +115,7 @@ const Container = styled.div`
     display: flex;
     flex-direction: column;
     gap: 1rem;
+    color:white;
     overflow: auto;
     &::-webkit-scrollbar {
       width: 0.2rem;
@@ -79,6 +125,32 @@ const Container = styled.div`
         border-radius: 1rem;
       }
     }
-
-
+    .message {
+      display: flex;
+      align-items: center;
+      .content {
+        max-width: 40%;
+        overflow-wrap: break-word;
+        padding: 1rem;
+        font-size: 1.1rem;
+        border-radius: 1rem;
+        color: #d1d1d1;
+        @media screen and (min-width: 720px) and (max-width: 1080px) {
+          max-width: 70%;
+        }
+      }
+    }
+    .sended {
+      justify-content: flex-end;
+      .content {
+        background-color: #4f04ff21;
+      }
+    }
+    .recieved {
+      justify-content: flex-start;
+      .content {
+        background-color: #9900ff20;
+      }
+    }
+  }
 `;
