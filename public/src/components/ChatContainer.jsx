@@ -1,13 +1,16 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState,useRef } from 'react'
 import styled from "styled-components"
 import Logout from './Logout';
 import ChatInput from './ChatInput';
 import Messages from './Messages';
 import axios from "axios";
+import {v4 as uuidv4} from 'uuid'
 import { getAllMessagesRoute, sendMessageRoute } from '../utils/APIRoutes';
-export default function ChatContainer({ currentChat,currentUser }) {
+export default function ChatContainer({ currentChat,currentUser,socket }) {
  const [messages,setMessages] = useState([]) 
- 
+ const [arrivalMessage,setArrivalMessage] = useState(null)
+ const scrollRef = useRef();
+
  const handleSendMsg = async (msg) => {
   if (currentUser && currentChat) {
     await axios.post(sendMessageRoute, {
@@ -15,8 +18,33 @@ export default function ChatContainer({ currentChat,currentUser }) {
       to: currentChat._id,
       message: msg,
     });
+    socket.current.emit("send-msg",{
+      to: currentChat._id,
+      from: currentUser._id,
+      message: msg
+    })
+
+    const msgs = [...messages];
+    msgs.push({ fromSelf: true, message: msg });
+    setMessages(msgs);
   }
 };
+
+useEffect(() => {
+  if (socket.current) {
+    socket.current.on("msg-recieve", (msg) => {
+      setArrivalMessage({ fromSelf: false, message: msg });
+    });
+  }
+}, []);
+
+useEffect(()=>{
+  arrivalMessage && setMessages((prev)=>[...prev,arrivalMessage])
+},[arrivalMessage])
+
+useEffect(() => {
+  scrollRef.current?.scrollIntoView({ behavior: "smooth" });
+}, [messages]);
 
 useEffect(() => {
   fetchMessages();
@@ -59,9 +87,9 @@ const fetchMessages = async () => {
           </div>
             <div className="chat-messages">
                 {
-                messages.map((value, index) => {
+                messages.map((value) => {
                   return (
-                    <div key={index}>
+                    <div ref={scrollRef} key={uuidv4}>
                       <div className={`message ${value.fromSelf ? "sended" : "recieved"}`}>
                         <div className="content">
                           <p>
